@@ -9,35 +9,23 @@ const nothing = (...args) => {};
 const maybe = (transform) => (value) => value === undefined ? value : transform(value);
 const pipe = (...transforms) => (value) => transforms.reduce((prev, transform) => maybe(transform)(prev), value);
 
-// Initialized per transform
-const memoized = (operator) => {
-  let prev;
-  let curr;
-  const withMemo = (newValue) => {
-    prev = curr;
-    curr = newValue;
-    return newValue;
-  };
+const withHistory = (scan) => (operator) => {
+  const history = [];
 
-  return (...values) => {
-    if (values.length === 2) {
-      const [ p, c ] = values;
-      return withMemo(operator(p, c));
-    } else if (values.length === 1) {
-      const [ c ] = values;
-      return withMemo(operator(c))
-    } else {
-      return withMemo(operator());
-    }
-  }
+  return (value) => {
+    const artifact = scan(history);
+    history.push(value);
+    const passThrough = operator(artifact, value);
+    return passThrough;
+  };
 };
 
-const memoizedPipe = (...transforms) => pipe(...transforms.map(memoized));
+const analyze = withHistory(archives => archives[archives.length - 1]);
 
 const map = (transform) => (value) => transform(value);
-const reduce = (transform) => (prev, curr) => transform(prev, curr);
-// BUGGY, fix
-const accumulate = reduce((prev = 0, curr) => prev + curr);
+const tap = (transform) => (value) => (transform(value), value);
+const growth = (prev = 0, curr) => curr - prev;
+const accumulate = (transform) => withHistory(archives => archives)(values => values.reduce(transform, 0));
 
 const uid = () => {
   let id = 0;
@@ -73,9 +61,8 @@ const subject = (initial) => {
   const unsubscribe = () => {
     __subs__ = [];
   };
-  const pipe = (...transforms) => {
-    const memoizedPipes = memoizedPipe(...transforms);
-    const transformValue = (value) => memoizedPipes(value);
+  const _pipe = (...transforms) => {
+    const transformValue = (value) => pipe(...transforms)(value);
     const observer = subject(transformValue(getValue()));
     subscribe(value => observer.next(transformValue(value)));
     return observer;
@@ -85,7 +72,7 @@ const subject = (initial) => {
     getValue,
     getSubscribers,
     next,
-    pipe,
+    pipe: _pipe,
     subscribe,
     unsubscribe,
   };
@@ -113,8 +100,12 @@ const hello = clock.subscribe(() => console.log('Hello!'));
 const newClock = clock.pipe((e) => e.target.className);
 const className = newClock.subscribe(i => console.log(i));
 
-const analytics = newClock.pipe(
-  map(string => string.length),
-  accumulate
+const numbers = subject();
+const analytics = numbers.pipe(
+  map(num => num * 2),
+  map(num => num / 2),
+  analyze(growth),
+  accumulate((prev, curr) => prev + curr),
+  tap((num) => console.log(`Overall growth is: ${num}`))
 );
 const numbersToDate = analytics.subscribe(num => console.log(num));
