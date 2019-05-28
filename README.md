@@ -41,6 +41,6 @@ Return an `Observable`/`Subject` interface from `fromEvent(DOMElement, event)` w
 - `next(value)`
 - `getValue()`
 - `pipe(...operator: value => value)` given operators like
-  - tap(sideEffect)
-  - map(value => transform(value))
-  - withHistory(archives => scan(archives))((prev, curr) => prev + curr)
+  - `tap(console.log)`
+  - `map(value => double(value))`
+  - `withHistory(archives => getLastValue(archives))((prev, curr) => prev + curr)`
