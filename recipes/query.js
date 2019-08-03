@@ -34,61 +34,61 @@ export const g = (extract, children) =>
     : mapValues(children, child => toResolver(child)(extract(data)))
   )(toGetter(extract));
 
-const query = (data, resolvers) => g(data => data, resolvers)(data);
+const query = (resolvers) => g(data => data, resolvers);
 export default query;
 
 e(
   query(
-    { username: 'manuscriptmaster' },
     { handle: g('username') }
-  ),
+  )({ username: 'manuscriptmaster' }),
   { handle: 'manuscriptmaster' }
 );
 
 e(
   query(
-    { firstName: 'joshua' },
     { name: g('firstName') }
-  ),
+  )({ firstName: 'joshua' }),
   { name: 'joshua' }
 );
 
 e(
   query(
-    { board: { id: 123 } },
     { project: g('board', { identifier: g('id') }) }
-  ),
+  )({ board: { id: 123 } }),
   { project: { identifier: 123 } }
 );
 
 e(
   query(
-    { board: { user: { id: 123 } } },
     { project: g('board', { author: g('user', { identifier: g('id') }) }) }
-  ),
+  )({ board: { user: { id: 123 } } }),
   { project: { author: { identifier: 123 } } }
 );
 
 e(
   query(
-    { issues: [{ id: 123 }, { id: 456 }] },
     { stories: g('issues', [{ identifier: g('id') }]) }
-  ),
+  )({ issues: [{ id: 123 }, { id: 456 }] }),
   { stories: [{ identifier: 123 }, { identifier: 456 }] }
 );
 
 e(
   query(
-    { issues: [{ id: 123 }, { id: 456 }] },
     { stories: g('issues', [{ identifier: g('id'), hardcoded: 'hello' }]) }
-  ),
+  )({ issues: [{ id: 123 }, { id: 456 }] }),
   { stories: [{ identifier: 123, hardcoded: 'hello' }, { identifier: 456, hardcoded: 'hello' }] }
 );
 
 e(
   query(
-    { issues: [{ id: 123, name: 'Fix' }, { id: 456, name: 'Me' }] },
     { stories: p => p.issues }
-  ),
+  )({ issues: [{ id: 123, name: 'Fix' }, { id: 456, name: 'Me' }] }),
   { stories: [{ id: 123, name: 'Fix' }, { id: 456, name: 'Me' }] }
+);
+
+e(
+  query(
+    [{ identifier: g('id') }]
+  )([{ id: 123 }, { id: 456 }]),
+  [{ identifier: 123 }, { identifier: 456 }]
 );
