@@ -1,1 +1,1 @@
-import { resolveGraph } from './recipes/graphql';
+import './recipes/query';
