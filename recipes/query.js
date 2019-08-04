@@ -26,15 +26,15 @@ const toResolver = (valueOrFunc) =>
     : () => valueOrFunc;
 
 export const g = (extract, children) =>
-  ((extract) => (data) =>
+  ((extract) => (data, self) =>
       children === undefined ?
-        extract(data)
+        extract(data, self)
     : Array.isArray(children) ?
-        extract(data).map(d => g(d => d, children[0])(d))
-    : mapValues(children, child => toResolver(child)(extract(data)))
+        extract(data, self).map(d => g(d => d, children[0])(d, self))
+    : mapValues(children, child => toResolver(child)(extract(data, self), self))
   )(toGetter(extract));
 
-const query = (resolvers) => g(data => data, resolvers);
+const query = (resolvers) => (data) => g(data => data, resolvers)(data, data);
 export default query;
 
 e(
@@ -91,4 +91,35 @@ e(
     [{ identifier: g('id') }]
   )([{ id: 123 }, { id: 456 }]),
   [{ identifier: 123 }, { identifier: 456 }]
+);
+
+e(
+  query({
+    project: g('project', {
+      issues: g('issues', [{
+        id: g('id'),
+        board: g((issue, self) => self.boards.find(board => board.id === issue.boardId))
+      }])
+    })
+  })({
+    project: {
+      id: 123,
+      issues: [
+        { id: 456, boardId: 654 },
+        { id: 789, boardId: 987 }
+      ]
+    },
+    boards: [
+      { id: 654 },
+      { id: 987 }
+    ]
+  }),
+  {
+    project: {
+      issues: [
+        { id: 456, board: { id: 654 } },
+        { id: 789, board: { id: 987 } }
+      ]
+    }
+  }
 );
