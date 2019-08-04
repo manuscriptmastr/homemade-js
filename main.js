@@ -1,1 +1,1 @@
-import './recipes/query';
+import './recipes/graphql';
