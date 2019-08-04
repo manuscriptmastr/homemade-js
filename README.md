@@ -10,28 +10,41 @@ I encourage you to build your own version of tools you already interact with. Yo
 
 ## Current implementations:
 ### GraphQL: The Resolver Pattern
-Given a deeply nested "thing", unwrap the "thing" until it contains only objects, arrays, and values:
+Given a deeply nested resolver and a json-like payload, return a new payload that looks identical to the structure of my resolver:
 ```js
-assert.deepStrictEqual(
-  resolveGraph(() => ({
-    firstName: 'Joshua',
-    lastName: 'Martin',
-    nationalParksVisited: () => [
-      'Yosemite',
-      'Crater Lake',
-      'Shenandoah'
-    ]
-  })),
-  {
-    firstName: 'Joshua',
-    lastName: 'Martin',
-    nationalParksVisited: [
-      'Yosemite',
-      'Crater Lake',
-      'Shenandoah'
-    ]
-  }
-);
+import gql, { g } from './recipes/graphql';
+import truncate from './somewhere/over/the/rainbow';
+
+const worksByAuthor = gql({
+  author: g('user', {
+    name: g('fullName'),
+    pseudonym: g('username'),
+    works: g('book', [{
+      title: g('title'),
+      summary: g(book => truncate(book.text, 1, 'sentence'))
+    }])
+  })
+});
+
+fetch('/api/books/tolkien')
+  .then(data => data.json())
+  .then(worksByAuthor);
+
+// returns:
+
+// {
+//   author: {
+//     name: 'J. R. R. Tolkien',
+//     pseudonym: 'Oxymore',
+//     works: [
+//       {
+//         title: 'The Hobbit',
+//         summary: 'In a hole in the ground there lived a hobbit.'
+//       },
+//       ...
+//     ]
+//   }
+// }
 ```
 
 ### RxJS: The Observer Pattern
