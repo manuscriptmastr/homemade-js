@@ -13,7 +13,10 @@ e(
   { a: 2, b: 4, c: 6 }
 );
 
-const get = (key) => (data) => data[key];
+const get = (key) => (data) =>
+  typeof data === 'object' && data !== null && data.hasOwnProperty(key)
+    ? data[key]
+    : null;
 
 const toGetter = (extract) =>
   typeof extract === 'string'
@@ -25,18 +28,22 @@ const toResolver = (valueOrFunc) =>
     ? valueOrFunc
     : () => valueOrFunc;
 
-export const g = (extract, children) =>
-  ((extract) => (data, self) =>
-      children === undefined ?
-        extract(data, self)
-    : Array.isArray(children) ?
-        extract(data, self).map(d => g(d => d, children[0])(d, self))
-    : mapValues(children, child => toResolver(child)(extract(data, self), self))
-  )(toGetter(extract));
+export const g = (extract, children) => (data, root) => {
+  const newData = toGetter(extract)(data, root);
+  return (newData === undefined || newData === null) ?
+      null
+  : children === undefined ?
+      newData
+  : Array.isArray(children) ?
+      newData.map(d => g(d => d, children[0])(d, root))
+  :
+      mapValues(children, child => toResolver(child)(newData, root));
+  };
 
 const query = (resolvers) => (data) => g(data => data, resolvers)(data, data);
 export default query;
 
+// with key different from payload key
 e(
   query(
     { handle: g('username') }
@@ -44,13 +51,7 @@ e(
   { handle: 'manuscriptmaster' }
 );
 
-e(
-  query(
-    { name: g('firstName') }
-  )({ firstName: 'joshua' }),
-  { name: 'joshua' }
-);
-
+// with children resolvers
 e(
   query(
     { project: g('board', { identifier: g('id') }) }
@@ -58,6 +59,7 @@ e(
   { project: { identifier: 123 } }
 );
 
+// with deeply-nested resolvers
 e(
   query(
     { project: g('board', { author: g('user', { identifier: g('id') }) }) }
@@ -65,6 +67,7 @@ e(
   { project: { author: { identifier: 123 } } }
 );
 
+// with array
 e(
   query(
     { stories: g('issues', [{ identifier: g('id') }]) }
@@ -72,6 +75,7 @@ e(
   { stories: [{ identifier: 123 }, { identifier: 456 }] }
 );
 
+// with hardcoded property
 e(
   query(
     { stories: g('issues', [{ identifier: g('id'), hardcoded: 'hello' }]) }
@@ -79,6 +83,7 @@ e(
   { stories: [{ identifier: 123, hardcoded: 'hello' }, { identifier: 456, hardcoded: 'hello' }] }
 );
 
+// with plain function
 e(
   query(
     { stories: p => p.issues }
@@ -86,6 +91,7 @@ e(
   { stories: [{ id: 123, name: 'Fix' }, { id: 456, name: 'Me' }] }
 );
 
+// with top-level array
 e(
   query(
     [{ identifier: g('id') }]
@@ -93,12 +99,15 @@ e(
   [{ identifier: 123 }, { identifier: 456 }]
 );
 
+// with root parameter
 e(
   query({
     project: g('project', {
       issues: g('issues', [{
         id: g('id'),
-        board: g((issue, self) => self.boards.find(board => board.id === issue.boardId))
+        board: g((issue, root) => root.boards.find(board => board.id === issue.boardId), {
+          id: g('id')
+        })
       }])
     })
   })({
@@ -122,4 +131,38 @@ e(
       ]
     }
   }
+);
+
+// when property does not exist or is undefined, set to null
+e(
+  query(
+    { username: g('uname') }
+  )({ username: 'manuscriptmaster' }),
+  { username: null }
+);
+
+// when property does not exist or is undefined, set to null and ignore children resolvers
+e(
+  query({
+    user: g('user', {
+      id: g('id')
+    })
+  })({ currentUser: { id: 123 } }),
+  { user: null }
+);
+
+// when plain function returns undefined or null, set to null
+e(
+  query({ user: g(p => p.user) })({ currentUser: { id: 123 } }),
+  { user: null }
+);
+
+// when plain function returns undefined or null, set to null and ignore children resolvers
+e(
+  query({
+    user: g(p => p.user, {
+      id: g('id')
+    })
+  })({ currentUser: { id: 123 } }),
+  { user: null }
 );
