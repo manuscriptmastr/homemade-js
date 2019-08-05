@@ -46,6 +46,29 @@ fetch('/api/books/tolkien')
 //   }
 // }
 ```
+The original payload `root` is passed as a second argument in case you need to refer to information elsewhere in the tree structure:
+
+```js
+gql({
+  author: g(data => data.authors.find(a => a.username === 'Oxymore'), {
+    name: g('fullName'),
+    group: g((author, root) => root.groups.find(g => g.id === author.groupId), {
+      name: g('name')
+    })
+  })
+});
+
+// returns:
+
+// {
+//   author: {
+//     name: 'J. R. R. Tolkien',
+//     group: {
+//       name: 'Inklings'
+//     }
+//   }
+// }
+```
 
 ### RxJS: The Observer Pattern
 Return an `Observable`/`Subject` interface from `fromEvent(DOMElement, event)` with standard methods like:
