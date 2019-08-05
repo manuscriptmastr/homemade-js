@@ -19,7 +19,7 @@ const worksByAuthor = gql({
   author: g('user', {
     name: g('fullName'),
     pseudonym: g('username'),
-    works: g('book', [{
+    works: g('books', [{
       title: g('title'),
       summary: g(book => truncate(book.text, 1, 'sentence'))
     }])
