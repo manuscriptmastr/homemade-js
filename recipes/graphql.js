@@ -40,7 +40,21 @@ export const g = (extract, children) => (data, root) => {
       mapValues(children, child => toResolver(child)(newData, root));
 };
 
-const gql = (resolvers) => (data) => g(data => data, resolvers)(data, data);
+const gql = (...args) => (data) => {
+  let extract;
+  let resolvers;
+
+  if (args.length === 2) {
+    extract = args[0];
+    resolvers = args[1];
+  } else {
+    extract = data => data;
+    resolvers = args[0];
+  }
+
+  return g(extract, resolvers)(data, data);
+};
+
 export default gql;
 
 // with key different from payload key
@@ -97,6 +111,22 @@ e(
     [{ identifier: g('id') }]
   )([{ id: 123 }, { id: 456 }]),
   [{ identifier: 123 }, { identifier: 456 }]
+);
+
+// with top-level array and extract
+e(
+  gql((issues) => issues.filter(issue => issue.boardId === 123), [{
+    id: g('id')
+  }])([{ id: 456, boardId: 123 }, { id: 789, boardId: 123 }, { id: 321, boardId: 432 }]),
+  [{ id: 456 }, { id: 789 }]
+);
+
+// with top-level object and extract
+e(
+  gql((issues) => issues[0], {
+    id: g('id')
+  })([{ id: 456 }, { id: 789 }]),
+  { id: 456 }
 );
 
 // with root parameter
