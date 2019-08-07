@@ -8,11 +8,6 @@ const mapValues = (object, transform) =>
   fromEntries(Object.entries(object)
     .map(([key, value]) => [key, transform(value)]));
 
-e(
-  mapValues({ a: 1, b: 2, c: 3 }, num => num * 2),
-  { a: 2, b: 4, c: 6 }
-);
-
 const get = (key) => (data) =>
   typeof data === 'object' && data !== null && data.hasOwnProperty(key)
     ? data[key]
