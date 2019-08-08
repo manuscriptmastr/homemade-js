@@ -1,4 +1,3 @@
-import assert from 'assert';
 import gql, { g } from './graphql';
 
 const payload = {
@@ -43,31 +42,17 @@ const payload = {
 const boardByIssue = (issue, { boards }) =>
   boards.find(b => b.id === issue.boardId);
 
-const sprintByIssue = (issue, { sprints }) =>
-  sprints.find(s => s.id === issue.sprintId);
-
 const issuesByBoard = (board, { issues }) =>
   issues.filter(i => i.boardId === board.id);
 
-const issuesBySprint = (sprint, { issues }) =>
-  issues.filter(i => i.sprintId === sprint.id);
-
-const issue = {
+const query = gql('boards', [{
   id: g('id'),
   name: g('name'),
-  board: g(boardByIssue)
-};
+  issues: g(issuesByBoard, [{
+    id: g('id'),
+    name: g('name'),
+    board: g(boardByIssue)
+  }])
+}]);
 
-const board = {
-  id: g('id'),
-  name: g('name'),
-  issues: g(issuesByBoard, [issue])
-};
-
-const sprint = {
-  id: g('id'),
-  name: g('name'),
-  issues: g(issuesBySprint)
-};
-
-const query = gql('boards', [board]);
+query(payload);
