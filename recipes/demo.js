@@ -1,58 +1,23 @@
-import gql, { g } from './graphql';
+import fetch from 'node-fetch';
+import gql, { g } from './graphql-async';
 
-const payload = {
-  sprints: [
-    {
-      name: 'Sprint 1',
-      id: 123,
-      boardId: 135
-    },
-    {
-      name: 'Sprint 2',
-      id: 456,
-      boardId: 246
-    }
-  ],
-  boards: [
-    {
-      name: 'WillowTree Website',
-      id: 135
-    },
-    {
-      name: 'Fox News',
-      id: 246
-    }
-  ],
-  issues: [
-    {
-      name: 'Fix button on homepage',
-      id: 321,
-      sprintId: 123,
-      boardId: 135
-    },
-    {
-      name: 'Video should close on finish',
-      id: 432,
-      sprintId: 456,
-      boardId: 246
-    }
-  ]
-};
+const API = 'https://jsonplaceholder.typicode.com';
 
-const boardByIssue = (issue, { boards }) =>
-  boards.find(b => b.id === issue.boardId);
+const get = (path) => fetch(`${API}${path}`)
+  .then(res => res.json());
 
-const issuesByBoard = (board, { issues }) =>
-  issues.filter(i => i.boardId === board.id);
-
-const query = gql('boards', [{
-  id: g('id'),
-  name: g('name'),
-  issues: g(issuesByBoard, [{
+const query =
+  gql(() => get('/posts'), [{
     id: g('id'),
-    name: g('name'),
-    board: g(boardByIssue)
-  }])
-}]);
+    comments: g(({ id }) => get(`/posts/${id}/comments`).then(d => d.slice(0, 6)), [{
+      name: g('name'),
+      body: g('body')
+    }]),
+    author: g(({ userId }) => get(`/users/${userId}`), {
+      fullName: g('name'),
+      username: g('username'),
+      email: g('email')
+    })
+  }]);
 
-query(payload);
+query().then(console.log);
