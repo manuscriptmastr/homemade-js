@@ -2,7 +2,6 @@ import assert from 'assert';
 import fromEntries from 'object.fromentries';
 Object.fromEntries = fromEntries;
 const e = assert.deepStrictEqual.bind(assert);
-const tap = (thing) => (console.log(thing), thing);
 
 class EnumError extends Error {
   constructor(message) {
@@ -35,14 +34,18 @@ const Color = makeEnum('Color', ['white', 'black', 'blue', 'charcoal']);
 e(Color.blue, 'blue');
 e(Color('blue'), 'blue');
 
-// Thoughts to refactor modifier methods?
-// updateState = (updater) => (state) => updater(state);
-// updateProp('foregroundColor')(state, color)
+// const withWrapper = (ComponentName) => (thing) =>
+//   `<${ComponentName} ${Object.entries(props).map((k, v) => `${k}=${v}`)}>${thing}</${ComponentName}>`;
+
+const withWrapper = (ComponentName) => (thing) =>
+  `<${ComponentName}>${thing}</${ComponentName}>`;
+
+// Starts off the render chain.
+const render = (Component) => Component.render();
 
 const Text = (child, modifiers = {}) => {
-  const wrapped = (thing) => `<Text>${thing}</Text>`;
   const props = { foregroundColor: Color.black, backgroundColor: Color.white, ...modifiers };
-  const render = () => wrapped(child);
+  const render = () => withWrapper('Text')(child);
 
   return {
     render,
@@ -51,10 +54,6 @@ const Text = (child, modifiers = {}) => {
     backgroundColor: (color) => Text(child, { ...props, backgroundColor: color })
   };
 };
-
-// Starts off the render chain. TODO add second arg for props.
-// Every .render should accept args
-const render = (Component) => Component.render();
 
 // Test Text functional component
 e(render(Text('')), '<Text></Text>');
@@ -70,9 +69,8 @@ e(
 );
 
 const VStack = (children, modifiers = {}) => {
-  const wrapped = (thing) => `<VStack>${thing}</VStack>`;
   const props = { height: 0, width: 0, ...modifiers };
-  const render = () => wrapped(children.map(child => child.render()).join(''));
+  const render = () => withWrapper('VStack')(children.map(child => child.render()).join(''));
 
   return {
     render,
