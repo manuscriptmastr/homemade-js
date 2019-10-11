@@ -2,6 +2,7 @@ import assert from 'assert';
 import fromEntries from 'object.fromentries';
 Object.fromEntries = fromEntries;
 const e = assert.deepStrictEqual.bind(assert);
+const tap = (thing) => (console.log(thing), thing);
 
 class EnumError extends Error {
   constructor(message) {
@@ -34,18 +35,15 @@ const Color = makeEnum('Color', ['white', 'black', 'blue', 'charcoal']);
 e(Color.blue, 'blue');
 e(Color('blue'), 'blue');
 
-// const withWrapper = (ComponentName) => (thing) =>
-//   `<${ComponentName} ${Object.entries(props).map((k, v) => `${k}=${v}`)}>${thing}</${ComponentName}>`;
-
-const withWrapper = (ComponentName) => (thing) =>
-  `<${ComponentName}>${thing}</${ComponentName}>`;
+const withWrapper = (ComponentName, props, thing) =>
+  `<${ComponentName} ${Object.entries(props).map(([k, v]) => `${k}="${v}"`).join(' ')}>${thing}</${ComponentName}>`;
 
 // Starts off the render chain.
 const render = (Component) => Component.render();
 
 const Text = (child, modifiers = {}) => {
   const props = { foregroundColor: Color.black, backgroundColor: Color.white, ...modifiers };
-  const render = () => withWrapper('Text')(child);
+  const render = () => withWrapper('Text', props, child);
 
   return {
     render,
@@ -56,8 +54,8 @@ const Text = (child, modifiers = {}) => {
 };
 
 // Test Text functional component
-e(render(Text('')), '<Text></Text>');
-e(render(Text('Hi')), '<Text>Hi</Text>')
+e(render(Text('')), '<Text foregroundColor="black" backgroundColor="white"></Text>');
+e(render(Text('Hi')), '<Text foregroundColor="black" backgroundColor="white">Hi</Text>')
 e(Text('').props.foregroundColor, 'black');
 e(Text('').foregroundColor('blue').props.foregroundColor, 'blue');
 e(
@@ -70,7 +68,7 @@ e(
 
 const VStack = (children, modifiers = {}) => {
   const props = { height: 0, width: 0, ...modifiers };
-  const render = () => withWrapper('VStack')(children.map(child => child.render()).join(''));
+  const render = () => withWrapper('VStack', props, children.map(child => child.render()).join(''));
 
   return {
     render,
@@ -80,7 +78,7 @@ const VStack = (children, modifiers = {}) => {
   };
 };
 
-e(render(VStack([])), '<VStack></VStack>');
+e(render(VStack([])), '<VStack height="0" width="0"></VStack>');
 e(VStack([]).height(10).props.height, 10);
 e(
   VStack([]).height(10).width(10).props,
@@ -94,7 +92,7 @@ e(
       Text('Hi')
     ])
   ),
-  '<VStack><Text>Hi</Text></VStack>'
+  '<VStack height="0" width="0"><Text foregroundColor="black" backgroundColor="white">Hi</Text></VStack>'
 );
 
 e(
@@ -106,5 +104,5 @@ e(
       Text('world')
     ])
   ),
-  '<VStack><Text>Hello</Text><Text>world</Text></VStack>'
+  '<VStack height="0" width="0"><Text foregroundColor="blue" backgroundColor="black">Hello</Text><Text foregroundColor="black" backgroundColor="white">world</Text></VStack>'
 );
