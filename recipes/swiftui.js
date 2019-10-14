@@ -41,6 +41,8 @@ const render = (Component) => Component.render();
 const sanitize = (string) => string.replace(/>[\s]+</gi, '><').trim();
 const updateProp = (key) => (value, props = {}) => ({ ...props, [key]: value });
 
+// All Components, be it Text, VStack, List, etc have child/children, props, render, map.
+// How can we refactor these into a Component factory?
 const Text = (child, modifiers = {}) => {
   const props = { foregroundColor: Color.black, backgroundColor: Color.white, ...modifiers };
   const render = () => withWrapper('Text', props, child);
