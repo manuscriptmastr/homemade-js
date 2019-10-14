@@ -71,19 +71,8 @@ gql({
 ```
 An async version of `gql` is available for kicks and grins. Whether this is a good idea is entirely up to you.
 
-### RxJS: The Observer Pattern
-Return an `Observable`/`Subject` interface from `fromEvent(DOMElement, event)` with standard methods like:
-- `subscribe()`
-- `unsubscribe()`
-- `next(value)`
-- `getValue()`
-- `pipe(...operator: value => value)` given operators like
-  - `tap(console.log)`
-  - `map(value => double(value))`
-  - `withHistory(archives => getLastValue(archives))((prev, curr) => prev + curr)`
-
 ### SwiftUI
-Proof of concept. Given a tree structure resembling SwiftUI syntax, render XML-like raw string:
+Given a SwiftUI-like tree structure, render raw XML:
 
 ```js
 render(
@@ -102,3 +91,14 @@ render(
 //   <Text foregroundColor="black" backgroundColor="white">world</Text>
 // </VStack>
 ```
+
+### RxJS: The Observer Pattern
+Return an `Observable`/`Subject` interface from `fromEvent(DOMElement, event)` with standard methods like:
+- `subscribe()`
+- `unsubscribe()`
+- `next(value)`
+- `getValue()`
+- `pipe(...operator: value => value)` given operators like
+  - `tap(console.log)`
+  - `map(value => double(value))`
+  - `withHistory(archives => getLastValue(archives))((prev, curr) => prev + curr)`
