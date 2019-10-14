@@ -35,18 +35,18 @@ const Color = makeEnum('Color', ['white', 'black', 'blue', 'charcoal']);
 e(Color.blue, 'blue');
 e(Color('blue'), 'blue');
 
-const withWrapper = (ComponentName, props, thing) =>
-  `<${ComponentName} ${Object.entries(props).map(([k, v]) => `${k}="${v}"`).join(' ')}>${thing}</${ComponentName}>`;
+const withWrapper = (ComponentName, props = {}) => (children) =>
+  `<${ComponentName} ${Object.entries(props).map(([k, v]) => `${k}="${v}"`).join(' ')}>${children}</${ComponentName}>`;
 const render = (Component) => Component.render();
 const sanitize = (string) => string.replace(/>[\s]+</gi, '><').trim();
 const updateProp = (key) => (value, props = {}) => ({ ...props, [key]: value });
 
 // All Components, be it Text, VStack, List, etc have child/children, props, render, map.
 // How can we refactor these into a Component factory?
-const Text = (child, modifiers = {}) => {
+const Text = (children, modifiers = {}) => {
   const props = { foregroundColor: Color.black, backgroundColor: Color.white, ...modifiers };
-  const render = () => withWrapper('Text', props, child);
-  const map = (update) => (...args) => Text(child, update(...args, props));
+  const render = () => withWrapper('Text', props)(children);
+  const map = (update) => (...args) => Text(children, update(...args, props));
 
   return {
     render,
@@ -71,7 +71,7 @@ e(
 
 const VStack = (children, modifiers = {}) => {
   const props = { height: 0, width: 0, ...modifiers };
-  const render = () => withWrapper('VStack', props, children.map(child => child.render()).join(''));
+  const render = () => withWrapper('VStack', props)(children.map(child => child.render()).join(''));
   const map = (update) => (...args) => VStack(children, update(...args, props));
 
   return {
