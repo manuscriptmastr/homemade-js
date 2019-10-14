@@ -37,9 +37,8 @@ e(Color('blue'), 'blue');
 
 const withWrapper = (ComponentName, props, thing) =>
   `<${ComponentName} ${Object.entries(props).map(([k, v]) => `${k}="${v}"`).join(' ')}>${thing}</${ComponentName}>`;
-
-// Starts off the render chain.
 const render = (Component) => Component.render();
+const sanitize = (string) => string.replace(/>[\s]+</gi, '><').trim();
 
 const Text = (child, modifiers = {}) => {
   const props = { foregroundColor: Color.black, backgroundColor: Color.white, ...modifiers };
@@ -53,7 +52,7 @@ const Text = (child, modifiers = {}) => {
   };
 };
 
-// Test Text functional component
+// Test Text component
 e(render(Text('')), '<Text foregroundColor="black" backgroundColor="white"></Text>');
 e(render(Text('Hi')), '<Text foregroundColor="black" backgroundColor="white">Hi</Text>')
 e(Text('').props.foregroundColor, 'black');
@@ -78,6 +77,7 @@ const VStack = (children, modifiers = {}) => {
   };
 };
 
+// Test empty VStack
 e(render(VStack([])), '<VStack height="0" width="0"></VStack>');
 e(VStack([]).height(10).props.height, 10);
 e(
@@ -92,7 +92,11 @@ e(
       Text('Hi')
     ])
   ),
-  '<VStack height="0" width="0"><Text foregroundColor="black" backgroundColor="white">Hi</Text></VStack>'
+  sanitize(`
+    <VStack height="0" width="0">
+      <Text foregroundColor="black" backgroundColor="white">Hi</Text>
+    </VStack>
+  `)
 );
 
 e(
@@ -104,5 +108,10 @@ e(
       Text('world')
     ])
   ),
-  '<VStack height="0" width="0"><Text foregroundColor="blue" backgroundColor="black">Hello</Text><Text foregroundColor="black" backgroundColor="white">world</Text></VStack>'
+  sanitize(`
+    <VStack height="0" width="0">
+      <Text foregroundColor="blue" backgroundColor="black">Hello</Text>
+      <Text foregroundColor="black" backgroundColor="white">world</Text>
+    </VStack>
+  `)
 );
