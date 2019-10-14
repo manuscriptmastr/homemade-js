@@ -71,7 +71,7 @@ gql({
 ```
 An async version of `gql` is available for kicks and grins. Whether this is a good idea is entirely up to you.
 
-### SwiftUI
+### SwiftUI: The Declarative, Functory, and Generally Pretty Pattern
 Given a SwiftUI-like tree structure, render raw XML:
 
 ```js
