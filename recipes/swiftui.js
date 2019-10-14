@@ -39,16 +39,18 @@ const withWrapper = (ComponentName, props, thing) =>
   `<${ComponentName} ${Object.entries(props).map(([k, v]) => `${k}="${v}"`).join(' ')}>${thing}</${ComponentName}>`;
 const render = (Component) => Component.render();
 const sanitize = (string) => string.replace(/>[\s]+</gi, '><').trim();
+const updateProp = (key) => (value, props = {}) => ({ ...props, [key]: value });
 
 const Text = (child, modifiers = {}) => {
   const props = { foregroundColor: Color.black, backgroundColor: Color.white, ...modifiers };
   const render = () => withWrapper('Text', props, child);
+  const map = (update) => (...args) => Text(child, update(...args, props));
 
   return {
     render,
     props,
-    foregroundColor: (color) => Text(child, { ...props, foregroundColor: color }),
-    backgroundColor: (color) => Text(child, { ...props, backgroundColor: color })
+    foregroundColor: map(updateProp('foregroundColor')),
+    backgroundColor: map(updateProp('backgroundColor'))
   };
 };
 
@@ -68,12 +70,13 @@ e(
 const VStack = (children, modifiers = {}) => {
   const props = { height: 0, width: 0, ...modifiers };
   const render = () => withWrapper('VStack', props, children.map(child => child.render()).join(''));
+  const map = (update) => (...args) => VStack(children, update(...args, props));
 
   return {
     render,
     props,
-    height: (pixels) => VStack(children, { ...props, height: pixels }),
-    width: (pixels) => VStack(children, { ...props, width: pixels })
+    height: map(updateProp('height')),
+    width: map(updateProp('width'))
   };
 };
 
