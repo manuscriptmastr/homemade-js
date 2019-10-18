@@ -58,7 +58,7 @@ const Text = (children, modifiers = {}) => {
 
 // Test Text component
 e(render(Text('')), '<Text foregroundColor="black" backgroundColor="white"></Text>');
-e(render(Text('Hi')), '<Text foregroundColor="black" backgroundColor="white">Hi</Text>')
+e(render(Text('Hi')), '<Text foregroundColor="black" backgroundColor="white">Hi</Text>');
 e(Text('').props.foregroundColor, 'black');
 e(Text('').foregroundColor('blue').props.foregroundColor, 'blue');
 e(
@@ -118,5 +118,52 @@ e(
       <Text foregroundColor="blue" backgroundColor="black">Hello</Text>
       <Text foregroundColor="black" backgroundColor="white">world</Text>
     </VStack>
+  `)
+);
+
+const K = k => k;
+
+const List = (list, children = K, modifiers = {}) => {
+  const props = { orientation: 'vertical', ...modifiers };
+  const render = () => withWrapper('List', props)(list.map(element => children(element).render()).join(''));
+  const map = (update) => (...args) => List(list, children, update(...args, props));
+
+  return {
+    render,
+    props,
+    orientation: map(updateProp('orientation'))
+  };
+};
+
+// Test empty List
+e(render(List([])), '<List orientation="vertical"></List>');
+e(render(List([], () => Text('Hi'))), '<List orientation="vertical"></List>');
+
+// Test List with children
+e(
+  render(
+    List([
+      Text('Hi')
+    ])
+  ),
+  sanitize(`
+    <List orientation="vertical">
+      <Text foregroundColor="black" backgroundColor="white">Hi</Text>
+    </List>
+  `)
+);
+
+e(
+  render(
+    List(['hello', 'world'], ([ firstChar ]) =>
+      Text(firstChar)
+        .backgroundColor(Color.blue)
+    )
+  ),
+  sanitize(`
+    <List orientation="vertical">
+      <Text foregroundColor="black" backgroundColor="blue">h</Text>
+      <Text foregroundColor="black" backgroundColor="blue">w</Text>
+    </List>
   `)
 );
