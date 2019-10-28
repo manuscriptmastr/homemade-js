@@ -27,8 +27,8 @@ const Archived = (history, head = null) => {
     value,
     next: (val) => Archived([...take(head + 1, history), val]),
     map: (fn) => Archived([...take(head + 1, history), fn(value)]),
-    undo: () => Archived([...history], safeHd(head - 1)),
-    redo: () => Archived([...history], safeHd(head + 1)),
+    undo: () => Archived(history, safeHd(head - 1)),
+    redo: () => Archived(history, safeHd(head + 1)),
     _history: history,
     _head: head,
     toString: () => `Archived(${value})`
