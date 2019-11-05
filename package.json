@@ -9,11 +9,11 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "nodemon": "^1.19.0"
+    "nodemon": "^1.19.4"
   },
   "dependencies": {
     "esm": "^3.2.25",
     "node-fetch": "^2.6.0",
-    "object.fromentries": "^2.0.0"
+    "object.fromentries": "^2.0.1"
   }
 }
