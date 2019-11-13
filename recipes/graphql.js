@@ -1,12 +1,8 @@
 import assert from 'assert';
-import fromEntries from 'object.fromentries';
-const e = assert.deepStrictEqual.bind(assert);
+import { mapValues } from 'lodash/fp';
+const eq = assert.deepStrictEqual;
 
 // gql uses a declarative syntax to map json-like data to only the data you are interested in
-
-const mapValues = (object, transform) =>
-  fromEntries(Object.entries(object)
-    .map(([key, value]) => [key, transform(value)]));
 
 const get = (key) => (data) =>
   typeof data === 'object' && data !== null && data.hasOwnProperty(key)
@@ -32,7 +28,7 @@ export const g = (extract, children) => (data, root) => {
   : Array.isArray(children) ?
       newData.map(d => g(d => d, children[0])(d, root))
   :
-      mapValues(children, child => toResolver(child)(newData, root));
+      mapValues(child => toResolver(child)(newData, root), children);
 };
 
 const gql = (...args) => (data) => {
@@ -53,7 +49,7 @@ const gql = (...args) => (data) => {
 export default gql;
 
 // with key different from payload key
-e(
+eq(
   gql(
     { handle: g('username') }
   )({ username: 'manuscriptmaster' }),
@@ -61,7 +57,7 @@ e(
 );
 
 // with children resolvers
-e(
+eq(
   gql(
     { project: g('board', { identifier: g('id') }) }
   )({ board: { id: 123 } }),
@@ -69,7 +65,7 @@ e(
 );
 
 // with deeply-nested resolvers
-e(
+eq(
   gql(
     { project: g('board', { author: g('user', { identifier: g('id') }) }) }
   )({ board: { user: { id: 123 } } }),
@@ -77,7 +73,7 @@ e(
 );
 
 // with array
-e(
+eq(
   gql(
     { stories: g('issues', [{ identifier: g('id') }]) }
   )({ issues: [{ id: 123 }, { id: 456 }] }),
@@ -85,7 +81,7 @@ e(
 );
 
 // with hardcoded property
-e(
+eq(
   gql(
     { stories: g('issues', [{ identifier: g('id'), hardcoded: 'hello' }]) }
   )({ issues: [{ id: 123 }, { id: 456 }] }),
@@ -93,7 +89,7 @@ e(
 );
 
 // with plain function
-e(
+eq(
   gql(
     { stories: p => p.issues }
   )({ issues: [{ id: 123, name: 'Fix' }, { id: 456, name: 'Me' }] }),
@@ -101,7 +97,7 @@ e(
 );
 
 // with top-level array
-e(
+eq(
   gql(
     [{ identifier: g('id') }]
   )([{ id: 123 }, { id: 456 }]),
@@ -109,7 +105,7 @@ e(
 );
 
 // with top-level array and extract
-e(
+eq(
   gql((issues) => issues.filter(issue => issue.boardId === 123), [{
     id: g('id')
   }])([{ id: 456, boardId: 123 }, { id: 789, boardId: 123 }, { id: 321, boardId: 432 }]),
@@ -117,7 +113,7 @@ e(
 );
 
 // with top-level object and extract
-e(
+eq(
   gql((issues) => issues[0], {
     id: g('id')
   })([{ id: 456 }, { id: 789 }]),
@@ -125,7 +121,7 @@ e(
 );
 
 // with root parameter
-e(
+eq(
   gql({
     project: g('project', {
       issues: g('issues', [{
@@ -159,7 +155,7 @@ e(
 );
 
 // when property does not exist or is undefined, set to null
-e(
+eq(
   gql(
     { username: g('uname') }
   )({ username: 'manuscriptmaster' }),
@@ -167,7 +163,7 @@ e(
 );
 
 // when property does not exist or is undefined, set to null and ignore children resolvers
-e(
+eq(
   gql({
     user: g('user', {
       id: g('id')
@@ -177,13 +173,13 @@ e(
 );
 
 // when plain function returns undefined or null, set to null
-e(
+eq(
   gql({ user: g(p => p.user) })({ currentUser: { id: 123 } }),
   { user: null }
 );
 
 // when plain function returns undefined or null, set to null and ignore children resolvers
-e(
+eq(
   gql({
     user: g(p => p.user, {
       id: g('id')
