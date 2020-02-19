@@ -1,5 +1,5 @@
 import test from 'ava';
-import { instanceOf, raise, rescue } from './error.js';
+import { instanceOf, raise, rescue } from './index.js';
 
 class NotFoundError extends Error {
   constructor(message) {
