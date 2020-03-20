@@ -1,34 +1,36 @@
 import test from 'ava';
-import query from './index.js';
+import query, { o, m, c } from './index.js';
 
-// Add operators (eq), composers (and), or qualifiers (not)
 const JQL = {
-  eq: (k, v) => `${k} = "${v}"`,
-  gt: (k, v) => `${k} > ${v}`,
-  and: (q1, q2) => `${q1} AND ${q2}`,
-  or: (q1, q2) => `${q1} OR ${q2}`,
-  not: (q) => `NOT ${q}`
+  eq: o((k, v) => `${k} = "${v}"`),
+  gt: o((k, v) => `${k} > ${v}`),
+  not: m((q) => `NOT ${q}`),
+  and: c((q1, q2) => `${q1} AND ${q2}`),
+  or: c((q1, q2) => `${q1} OR ${q2}`),
 };
 
 test('JQL definitions can be called directly to return JQL string', t => {
   const { and, eq, gt } = JQL;
   t.deepEqual(
-    and(eq('project', 'TEST'), gt('created', 'endOfDay("-1")')),
+    and([eq('project')('TEST'), gt('created', 'endOfDay("-1")')]),
     'project = "TEST" AND created > endOfDay("-1")'
-  )
+  );
 });
 
 test('query(operations, object) returns equals operation', t => {
-  t.deepEqual(query(JQL, { eq: ['project', 'TEST'] }), 'project = "TEST"');
+  const jql = query(JQL);
+  t.deepEqual(jql({ eq: ['project', 'TEST'] }), 'project = "TEST"');
 });
 
 test('query(operations, object) returns greater than operation', t => {
-  t.deepEqual(query(JQL, { gt: ['created', 'endOfDay("-1")'] }), 'created > endOfDay("-1")');
+  const jql = query(JQL);
+  t.deepEqual(jql({ gt: ['created', 'endOfDay("-1")'] }), 'created > endOfDay("-1")');
 });
 
 test('query(operations, object) returns and of two operations', t => {
-  t.deepEqual(query(JQL,
-    {
+  const jql = query(JQL);
+  t.deepEqual(
+    jql({
       and: [
         { eq: ['project', 'TEST'] },
         { gt: ['created', 'endOfDay("-1")'] }
