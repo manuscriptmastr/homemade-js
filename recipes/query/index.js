@@ -3,41 +3,99 @@ const { curry, curryN, map, toPairs } = ramda;
 
 const raise = (err) => { throw err };
 
-const query = curry((operations, object) => {
+/**
+ * Transforms an object into a query
+ * @typedef {Object} Transforms
+ * @typedef {Object} QueryObject
+ * 
+ * @param {Transforms} transforms
+ * @param {QueryObject} object
+ * @returns {string}
+ * @example
+ *   const jqlQuery = query(
+ *     {
+ *       and: c((a, b) => `${a} AND ${b}`),
+ *       eq: o((k, v) => `${k} = "${v}"`),
+ *       gt: o((k, v) => `${k} > ${v}`)
+ *     },
+ *     { and: [{ eq: ['project', 'Apollo'] }, { gt: ['done', 'yesterday'] }] }
+ *   );
+ *   // => 'project = "Apollo" AND done > yesterday'
+ */
+const query = curry((transforms, object) => {
   const [[key, value]] = toPairs(object);
-  const operation = operations[key];
-  const type = operation._type;
+  const transform = transforms[key];
+  const type = transform._type;
 
   return type === 'operator' ?
-      operation(...value)
+      transform(...value)
   : type === 'modifier' ?
-      operation(value)
+      transform(value)
   : type === 'composer' ?
-      operation(map(query(operations), value))
+      transform(map(query(transforms), value))
   :   value;
 });
 
-// operator: (k, v) => string
+/**
+ * Creates an operator
+ * @typedef {function(string, string | number): string} Operator
+ * 
+ * @param {Operator} fn
+ * @returns {Operator}
+ * @example
+ *   const set = o((key, value) => `${key} is ${value}`);
+ *   set('mood', 'good');
+ *   // => 'mood is good'
+ */
 export const o = (fn) => {
-  const func = curryN(2, fn);
+  const withValidation = (k, v) =>
+    typeof k === 'string' && (typeof v === 'string' || typeof v === 'number')
+      ? fn(k, v)
+      : raise(new Error('An operator requires two arguments'));
+  const func = curryN(2, withValidation);
   func._type = 'operator';
   return func;
 };
 
-// modifier: (q) => string
+/**
+ * Creates a modifier
+ * @typedef {function(string): string} Modifier
+ * 
+ * @param {Modifier} fn
+ * @returns {Modifier}
+ * @example
+ *   const negate = m((string) => `not ${string}`);
+ *   negate('bad');
+ *   // => 'not bad'
+ */
 export const m = (fn) => {
-  const func = curryN(1, fn);
+  const withValidation = (v) =>
+    typeof v === 'string'
+      ? fn(v)
+      : raise(new Error('A modifier requires a single string argument'));
+  const func = curryN(1, withValidation);
   func._type = 'modifier';
   return func;
 };
 
-// composer: (qs) => string
+/**
+ * Creates a composer
+ * @typedef {function(string, string): string} BinaryFunction
+ * @typedef {function(string[]): string} Composer
+ * 
+ * @param {BinaryFunction} fn
+ * @returns {Composer}
+ * @example
+ *   const commaSeparated = m((string1, string2) => `${string1}, ${string2}`);
+ *   commaSeparated(['bread', 'milk', 'blackberries']);
+ *   // => 'bread, milk, blackberries'
+ */
 export const c = (fn) => {
-  const reducedFn = (qs) =>
-    qs.length < 2
-      ? raise(new Error('Need minimum of two strings'))
-      : qs.reduce(fn);
-  const func = curryN(1, reducedFn);
+  const withValidation = (qs) =>
+    qs.length >= 2
+      ? qs.reduce(fn)
+      : raise(new Error('A composer requires an array of at least two strings'));
+  const func = curryN(1, withValidation);
   func._type = 'composer';
   return func;
 };
