@@ -19,9 +19,9 @@ test('Transforms (operators, modifiers, composers) can be called directly', t =>
 
 test('Transforms (operators, modifiers, composers) throw when arguments are invalid', t => {
   const { and, eq, gt } = JQL;
-  t.deepEqual(
-    and([eq('project')('TEST'), gt('created', 'endOfDay("-1")')]),
-    'project = "TEST" AND created > endOfDay("-1")'
+  t.throws(
+    () => and([eq('project', {}), gt('created', 'endOfDay("-1")')]),
+    { instanceOf: Error, message: 'An operator requires two arguments' }
   );
 });
 
