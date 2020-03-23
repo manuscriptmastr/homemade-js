@@ -4,23 +4,23 @@ import query, { o, m, c } from './index.js';
 const JQL = {
   eq: o((k, v) => `${k} = "${v}"`),
   gt: o((k, v) => `${k} > ${v}`),
-  not: m((q) => `NOT ${q}`),
-  and: c((q1, q2) => `${q1} AND ${q2}`),
-  or: c((q1, q2) => `${q1} OR ${q2}`),
+  not: m(q => `NOT ${q}`),
+  and: c(qs => qs.join(' AND ')),
+  or: c(qs => qs.join(' OR ')),
 };
 
-test('Transforms (operators, modifiers, composers) can be called directly', t => {
-  const { and, eq, gt } = JQL;
+test('o(), m(), and c() can be called directly', t => {
+  const { and, eq, gt, not } = JQL;
   t.deepEqual(
-    and([eq('project')('TEST'), gt('created', 'endOfDay("-1")')]),
-    'project = "TEST" AND created > endOfDay("-1")'
+    and([eq('project')('TEST'), not(gt('created', 'endOfDay("-1")'))]),
+    'project = "TEST" AND NOT created > endOfDay("-1")'
   );
 });
 
-test('Transforms (operators, modifiers, composers) throw when arguments are invalid', t => {
-  const { and, eq, gt } = JQL;
+test('o(), m(), and c() throw when arguments are invalid', t => {
+  const { and, eq, gt, not } = JQL;
   t.throws(
-    () => and([eq('project', {}), gt('created', 'endOfDay("-1")')]),
+    () => and([eq('project', {}), not(gt('created', 'endOfDay("-1")'))]),
     { instanceOf: Error, message: 'An operator requires two arguments' }
   );
 });

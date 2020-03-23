@@ -80,20 +80,19 @@ export const m = (fn) => {
 
 /**
  * Creates a composer
- * @typedef {function(string, string): string} BinaryFunction
  * @typedef {function(string[]): string} Composer
  * 
- * @param {BinaryFunction} fn
+ * @param {Composer} fn
  * @returns {Composer}
  * @example
- *   const commaSeparated = m((string1, string2) => `${string1}, ${string2}`);
+ *   const commaSeparated = m(strings => strings.join(', '));
  *   commaSeparated(['bread', 'milk', 'blackberries']);
  *   // => 'bread, milk, blackberries'
  */
 export const c = (fn) => {
   const withValidation = (qs) =>
     qs.length >= 2
-      ? qs.reduce(fn)
+      ? fn(qs)
       : raise(new Error('A composer requires an array of at least two strings'));
   const func = curryN(1, withValidation);
   func._type = 'composer';
