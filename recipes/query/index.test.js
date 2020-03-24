@@ -1,5 +1,6 @@
 import test from 'ava';
 import query, { o, m, c } from './index.js';
+import Joi from '@hapi/joi';
 
 const JQL = {
   eq: o((k, v) => `${k} = "${v}"`),
@@ -12,7 +13,7 @@ const JQL = {
 test('o(), m(), and c() can be called directly', t => {
   const { and, eq, gt, not } = JQL;
   t.deepEqual(
-    and([eq('project')('TEST'), not(gt('created', 'endOfDay("-1")'))]),
+    and([eq('project', 'TEST'), not(gt('created', 'endOfDay("-1")'))]),
     'project = "TEST" AND NOT created > endOfDay("-1")'
   );
 });
@@ -21,7 +22,7 @@ test('o(), m(), and c() throw when arguments are invalid', t => {
   const { and, eq, gt, not } = JQL;
   t.throws(
     () => and([eq('project', {}), not(gt('created', 'endOfDay("-1")'))]),
-    { instanceOf: Error, message: 'An operator requires two arguments' }
+    { instanceOf: Joi.ValidationError, message: '"value" must be one of [string, number]' }
   );
 });
 

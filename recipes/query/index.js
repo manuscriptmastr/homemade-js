@@ -1,7 +1,21 @@
 import ramda from 'ramda';
-const { curry, curryN, map, toPairs } = ramda;
+import Joi from '@hapi/joi';
+const { apply, compose, curry, map, toPairs, zip } = ramda;
 
-const raise = (err) => { throw err };
+// TODO:
+// 1. Modifier object syntax.
+// 2. Official validation library
+// 3. Create error with name of function and arguments passed in?
+
+const validateArgs = (argSchemas) => (...args) => {
+  const thingsToCheck = zip(argSchemas, args);
+  return thingsToCheck.map(([schema, arg]) => Joi.attempt(arg, schema));
+};
+
+const type = (string, fn) => {
+  fn._type = string;
+  return fn;
+};
 
 /**
  * Transforms an object into a query
@@ -47,15 +61,13 @@ const query = curry((transforms, object) => {
  *   set('mood', 'good');
  *   // => 'mood is good'
  */
-export const o = (fn) => {
-  const withValidation = (k, v) =>
-    typeof k === 'string' && (typeof v === 'string' || typeof v === 'number')
-      ? fn(k, v)
-      : raise(new Error('An operator requires two arguments'));
-  const func = curryN(2, withValidation);
-  func._type = 'operator';
-  return func;
-};
+export const o = fn => type('operator', compose(
+  apply(fn),
+  validateArgs([
+    Joi.string().required(),
+    Joi.alternatives(Joi.string(), Joi.number()).required()
+  ])
+));
 
 /**
  * Creates a modifier
@@ -68,15 +80,12 @@ export const o = (fn) => {
  *   negate('bad');
  *   // => 'not bad'
  */
-export const m = (fn) => {
-  const withValidation = (v) =>
-    typeof v === 'string'
-      ? fn(v)
-      : raise(new Error('A modifier requires a single string argument'));
-  const func = curryN(1, withValidation);
-  func._type = 'modifier';
-  return func;
-};
+export const m = fn => type('modifier', compose(
+  apply(fn),
+  validateArgs([
+    Joi.string().required()
+  ])
+));
 
 /**
  * Creates a composer
@@ -85,18 +94,21 @@ export const m = (fn) => {
  * @param {Composer} fn
  * @returns {Composer}
  * @example
- *   const commaSeparated = m(strings => strings.join(', '));
+ *   const commaSeparated = c(strings => strings.join(', '));
  *   commaSeparated(['bread', 'milk', 'blackberries']);
  *   // => 'bread, milk, blackberries'
  */
-export const c = (fn) => {
-  const withValidation = (qs) =>
-    qs.length >= 2
-      ? fn(qs)
-      : raise(new Error('A composer requires an array of at least two strings'));
-  const func = curryN(1, withValidation);
-  func._type = 'composer';
-  return func;
-};
+export const c = fn => type('composer', compose(
+  apply(fn),
+  validateArgs([
+    Joi.array().min(2).items(Joi.string()).required()
+  ])
+));
 
-export default query;
+export default compose(
+  apply(query),
+  validateArgs([
+    Joi.object().min(1).required(),
+    Joi.object().min(1).required()
+  ])
+);
