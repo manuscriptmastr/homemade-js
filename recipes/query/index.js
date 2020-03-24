@@ -1,16 +1,13 @@
 import ramda from 'ramda';
 import Joi from '@hapi/joi';
-const { apply, compose, curry, map, toPairs, zip } = ramda;
-
-const validateArgs = (argSchemas) => (...args) => {
-  const thingsToCheck = zip(argSchemas, args);
-  return thingsToCheck.map(([schema, arg]) => Joi.attempt(arg, schema));
-};
+const { curry, map, toPairs, useWith } = ramda;
 
 const type = (string, fn) => {
   fn._type = string;
   return fn;
 };
+
+const validate = curry((schema, arg) => Joi.attempt(arg, schema));
 
 /**
  * Transforms an object into a query
@@ -56,13 +53,10 @@ const query = curry((transforms, object) => {
  *   set('mood', 'good');
  *   // => 'mood is good'
  */
-export const o = fn => type('operator', compose(
-  apply(fn),
-  validateArgs([
-    Joi.string().required(),
-    Joi.alternatives(Joi.string(), Joi.number()).required()
-  ])
-));
+export const o = fn => type('operator', useWith(fn, [
+  validate(Joi.string().required()),
+  validate(Joi.alternatives(Joi.string(), Joi.number()).required())
+]));
 
 /**
  * Creates a modifier
@@ -75,12 +69,9 @@ export const o = fn => type('operator', compose(
  *   negate('bad');
  *   // => 'not bad'
  */
-export const m = fn => type('modifier', compose(
-  apply(fn),
-  validateArgs([
-    Joi.string().required()
-  ])
-));
+export const m = fn => type('modifier', useWith(fn, [
+  validate(Joi.string().required())
+]));
 
 /**
  * Creates a composer
@@ -93,17 +84,11 @@ export const m = fn => type('modifier', compose(
  *   commaSeparated(['bread', 'milk', 'blackberries']);
  *   // => 'bread, milk, blackberries'
  */
-export const c = fn => type('composer', compose(
-  apply(fn),
-  validateArgs([
-    Joi.array().min(2).items(Joi.string()).required()
-  ])
-));
+export const c = fn => type('composer', useWith(fn, [
+  validate(Joi.array().min(2).items(Joi.string()).required())
+]));
 
-export default compose(
-  apply(query),
-  validateArgs([
-    Joi.object().min(1).required(),
-    Joi.object().min(1).required()
-  ])
-);
+export default useWith(query, [
+  validate(Joi.object().min(1).required()),
+  validate(Joi.object().min(1).required())
+]);
