@@ -2,11 +2,6 @@ import ramda from 'ramda';
 import Joi from '@hapi/joi';
 const { apply, compose, curry, map, toPairs, zip } = ramda;
 
-// TODO:
-// 1. Modifier object syntax.
-// 2. Official validation library
-// 3. Create error with name of function and arguments passed in?
-
 const validateArgs = (argSchemas) => (...args) => {
   const thingsToCheck = zip(argSchemas, args);
   return thingsToCheck.map(([schema, arg]) => Joi.attempt(arg, schema));
