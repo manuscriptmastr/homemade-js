@@ -7,7 +7,7 @@ const safeHead = curry((arr, currHead, toHead) =>
     : currHead
 );
 
-const Archive = (history, head = null) => {
+const Archivable = (history, head = null) => {
   history = Array.isArray(history) ? history : [history];
   head = head === null ? history.length - 1 : head;
   const value = history[head];
@@ -15,14 +15,14 @@ const Archive = (history, head = null) => {
 
   return {
     value,
-    next: (val) => Archive([...take(head + 1, history), val]),
-    map: (fn) => Archive([...take(head + 1, history), fn(value)]),
-    undo: () => Archive(history, safeHd(head - 1)),
-    redo: () => Archive(history, safeHd(head + 1)),
+    next: (val) => Archivable([...take(head + 1, history), val]),
+    map: (fn) => Archivable([...take(head + 1, history), fn(value)]),
+    undo: () => Archivable(history, safeHd(head - 1)),
+    redo: () => Archivable(history, safeHd(head + 1)),
     _history: history,
     _head: head,
     toString: () => `Archived(${value})`
   };
 };
 
-export default Archive;
+export default Archivable;
