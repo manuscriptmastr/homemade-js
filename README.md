@@ -31,3 +31,6 @@ Just a bunch of recipes, with tests! Use `npm run test` to run the test suite.
 - `Text`
 - `VStack`
 - `List`
+### Async patterns
+- `Task`
+- `TaskTree`
