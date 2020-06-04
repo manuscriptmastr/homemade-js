@@ -1,10 +1,5 @@
 import R from 'ramda';
-const { adjust, curry } = R;
-
-// const safeFetch = thru(retry(3), fetch);
-// safeFetch('123.com', { method: 'GET' });
-// => Response
-export const thru = curry((decorate, fn) => (...args) => decorate(() => fn(...args)));
+const { adjust, curry, curryN } = R;
 
 // const appendThree = curry((prefix, infix, suffix) => `${prefix} ${infix} ${suffix}`);
 // const apThree = applyN(3, appendThree);
@@ -21,3 +16,32 @@ export const applyN = (num, fn) => {
   };
   return ([pos, arg]) => run([pos, arg], arrayOf(null, num));
 };
+
+// const lazyFetchAuthHeaders = onceEvery(5000, fetchAuthHeaders);
+// await lazyFetchAuthHeaders();
+// => invokes fetchAuthHeaders()
+// await lazyFetchAuthHeaders();
+// => skips invocation and returns last result
+// await wait(6000);
+// await lazyFetchAuthHeaders();
+// => invokes fetchAuthHeaders()
+export const onceEvery = curry((ms, fn) => {
+  let stale = true;
+  let timer;
+  let result;
+  return curryN(fn.length, (...args) => {
+    clearTimeout(timer);
+    if (stale) {
+      stale = false;
+      result = fn(...args);
+    }
+
+    timer = setTimeout(() => stale = true, ms);
+    return result;
+  });
+});
+
+// const safeFetch = thru(retry(3), fetch);
+// safeFetch('123.com', { method: 'GET' });
+// => Response
+export const thru = curry((decorate, fn) => (...args) => decorate(() => fn(...args)));
