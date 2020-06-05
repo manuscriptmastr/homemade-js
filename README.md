@@ -22,6 +22,7 @@ Just a bunch of recipes, with tests! Use `npm run test` to run the test suite.
 ### Functional
 - `applyN`
 - `onceEvery`
+- `onceUnless`
 - `thru`
 ### AST
 - `query`

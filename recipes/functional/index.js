@@ -1,5 +1,5 @@
 import R from 'ramda';
-const { adjust, curry, curryN } = R;
+const { adjust, curry, curryN, once } = R;
 
 // const appendThree = curry((prefix, infix, suffix) => `${prefix} ${infix} ${suffix}`);
 // const apThree = applyN(3, appendThree);
@@ -38,6 +38,16 @@ export const onceEvery = curry((ms, fn) => {
 
     timer = setTimeout(() => stale = true, ms);
     return result;
+  });
+});
+
+export const onceUnless = curry((pred, fn) => {
+  let _fn = once(fn);
+  return curryN(fn.length, (...args) => {
+    if (pred(...args)) {
+      _fn = once(fn);
+    }
+    return _fn(...args);
   });
 });
 
