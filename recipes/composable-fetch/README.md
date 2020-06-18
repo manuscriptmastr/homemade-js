@@ -1,7 +1,7 @@
 # Composable `fetch()`
 The `fetch` API is ubiquitous to the web. Use higher order functions to decorate `fetch` without changing its interface.
 
-No need to `fetch` with a library just because you need timeout:
+No need to replace `fetch` with a library just because you need timeout:
 ```js
 import fetch from 'node-fetch';
 import { timeout } from 'composable-fetch';
