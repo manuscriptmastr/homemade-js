@@ -36,4 +36,4 @@ export const body = fetch => (json, url, opts = {}) => options({
 }, fetch)(url, opts);
 
 // applies multiple decorators to fetch
-export const decorate = (fn, decorators) => compose(...decorators)(fn);
+export default (fn, decorators) => compose(...decorators)(fn);

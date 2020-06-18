@@ -3,11 +3,10 @@ import nock from 'nock';
 import fetch from 'node-fetch';
 import R from 'ramda';
 const { apply, memoizeWith, pipe, tap } = R;
-import {
+import decorate, {
   basicAuthHeader,
   bearerAuthHeader,
   body,
-  decorate,
   headers,
   json,
   method,
