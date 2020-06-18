@@ -13,7 +13,8 @@ import {
   method,
   option,
   options,
-  rejectIfNotOkay
+  rejectIfNotOkay,
+  timeout
 } from './index';
 
 const MOCK_API = 'http://testing123.test';
@@ -247,6 +248,45 @@ test.serial('promise.then(rejectIfNotOkay) throws for bad statuses', async t => 
   await t.throwsAsync(
     fetch(MOCK_API).then(rejectIfNotOkay).then(res => res.json()),
     { instanceOf: Error, message: 'Bad Request' }
+  );
+  scope.done();
+});
+
+test('timeout(ms)(fetch) injects signal into fetch call', async t => {
+  const fakeFetch = async (...args) => args;
+  const [url, { signal }] = await timeout(3000, fakeFetch)('123.com');
+  t.deepEqual(url, '123.com');
+  t.truthy(signal);
+});
+
+test('timeout(ms)(fetch) merges signal with other options into fetch call', async t => {
+  const fakeFetch = async (...args) => args;
+  const [url, { method, signal }] = await timeout(3000, fakeFetch)('123.com', { method: 'GET' });
+  t.deepEqual(url, '123.com');
+  t.deepEqual(method, 'GET');
+  t.truthy(signal);
+});
+
+test.serial('timeout(ms)(fetch) returns result of fetch when shorter than ms', async t => {
+  const scope = nock(MOCK_API)
+    .get('/')
+    .reply(200, { hello: 'world' });
+  t.deepEqual(
+    await timeout(250)(fetch)(MOCK_API).then(res => res.json()),
+    { hello: 'world' }
+  );
+  scope.done();
+});
+
+test.serial('timeout(ms)(fetch) throws AbortError when fetch is longer than ms', async t => {
+  const scope = nock(MOCK_API)
+    .get('/')
+    .delayConnection(7000)
+    .reply(200, { hello: 'world' });
+
+  await t.throwsAsync(
+    () => timeout(150)(fetch)(MOCK_API).then(res => res.json()),
+    { name: 'AbortError', message: `The user aborted a request.` }
   );
   scope.done();
 });

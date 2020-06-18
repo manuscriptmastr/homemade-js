@@ -1,5 +1,6 @@
 import { raise } from '../error';
 import R from 'ramda';
+import AbortController from 'abort-controller';
 const {
   andThen,
   apply,
@@ -28,6 +29,11 @@ export const body = fetch => (json, url, opts = {}) => options({
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify(json)
 }, fetch)(url, opts);
+export const timeout = curry((ms, fetch) => options(() => {
+  const controller = new AbortController();
+  setTimeout(() => controller.abort(), ms);
+  return { signal: controller.signal };
+})(fetch));
 
 // applies multiple decorators to fetch
 export const decorate = (fn, decorators) => compose(...decorators)(fn);
