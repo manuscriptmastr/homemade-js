@@ -17,6 +17,14 @@ export const applyN = (num, fn) => {
   return ([pos, arg]) => run([pos, arg], arrayOf(null, num));
 };
 
+// Tail recursion using the chainRec category
+export const chainRec = curry((fn, acc) => {
+  const next = value => ({ tag: next, value });
+  const done = value => ({ tag: done, value });
+  const { value, tag } = fn(next, done, acc);
+  return tag === next ? chainRec(fn, value) : value;
+});
+
 // const lazyFetchAuthHeaders = onceEvery(5000, fetchAuthHeaders);
 // await lazyFetchAuthHeaders();
 // => invokes fetchAuthHeaders()

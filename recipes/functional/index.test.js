@@ -1,7 +1,7 @@
 import R from 'ramda';
 const { curry, curryN, pipe, tap } = R;
 import test from 'ava';
-import { applyN, onceEvery, onceUnless, thru } from './index';
+import { applyN, chainRec, onceEvery, onceUnless, thru } from './index';
 
 test('applyN(number, fn) positionally applies two arguments', t => {
   const append = curry((prefix, suffix) => `${prefix} ${suffix}`);
@@ -11,6 +11,53 @@ test('applyN(number, fn) positionally applies two arguments', t => {
 test('applyN(number, fn) positionally applies three or more arguments', t => {
   const appendThree = curry((prefix, infix, suffix) => `${prefix} ${infix} ${suffix}`);
   t.deepEqual(applyN(3, appendThree)([1, 'there'])([0, 'hello'])([2, 'world']), 'hello there world');
+});
+
+test('chainRec(fn) runs only once when fn calls done', t => {
+  let timesCalled = 0;
+  t.deepEqual(
+    chainRec((next, done, value) => {
+      timesCalled += 1;
+      return done(value.concat([1]));
+    }, []),
+    [1]
+  );
+  t.deepEqual(timesCalled, 1);
+});
+
+test('chainRec(fn) runs as long as fn calls next', t => {
+  let timesCalled = 0;
+  t.deepEqual(
+    chainRec((next, done, value) => {
+      timesCalled += 1;
+      return value.length === 3
+        ? done(value)
+        : next(value.concat([value.length + 1]));
+    }, []),
+    [1, 2, 3]
+  );
+  t.deepEqual(timesCalled, 4);
+});
+
+test('chainRec(fn) works with pagination', t => {
+  let timesCalled = 0;
+  const pages = [
+    { cursor: 1, data: [1] },
+    { cursor: 2, data: [2] },
+    { cursor: null, data: [3] }
+  ];
+  const getPage = num => pages[num];
+
+  t.deepEqual(
+    chainRec((next, done, { data, cursor }) => {
+      timesCalled += 1;
+      return cursor === null
+        ? done(data)
+        : next({ ...getPage(cursor), data: data.concat(getPage(cursor).data) });
+    }, { data: [], cursor: 0 }),
+    [1, 2, 3]
+  );
+  t.deepEqual(timesCalled, 4);
 });
 
 test('onceEvery(ms, fn) returns result of fn', t => {
