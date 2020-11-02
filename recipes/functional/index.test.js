@@ -1,7 +1,7 @@
 import R from 'ramda';
 const { curry, curryN, pipe, tap } = R;
 import test from 'ava';
-import { applyN, chainRec, onceEvery, onceUnless, thru } from './index';
+import { applyN, chainRec, previous, onceEvery, onceUnless, thru } from './index';
 
 test('applyN(number, fn) positionally applies two arguments', t => {
   const append = curry((prefix, suffix) => `${prefix} ${suffix}`);
@@ -58,6 +58,19 @@ test('chainRec(fn) works with pagination', t => {
     [1, 2, 3]
   );
   t.deepEqual(timesCalled, 4);
+});
+
+test('previous(fn, initial) passes initial as first previous value', t => {
+  const add = (a, b) => a + b;
+  t.deepEqual(previous(add, 0)(1), 1);
+});
+
+test('previous(fn, initial) passes previous value along', t => {
+  const add = (a, b) => a + b;
+  const addToLast = previous(add, 0);
+  t.deepEqual(addToLast(1), 1);
+  t.deepEqual(addToLast(2), 3);
+  t.deepEqual(addToLast(3), 6);
 });
 
 test('onceEvery(ms, fn) returns result of fn', t => {
